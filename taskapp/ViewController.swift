@@ -10,10 +10,12 @@ import UIKit
 import RealmSwift
 import UserNotifications    // 追加
 
-class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate {
     
 
     @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var searchCategory: UISearchBar!
+    
     
     // Realmインスタンスを取得する
     let realm = try! Realm()  // ←追加
@@ -30,7 +32,17 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         tableView.delegate = self
         tableView.dataSource = self
+        
+        
+        // Serch BarのDeleate先を設定
+        searchCategory.delegate = self
+        searchCategory.placeholder = "カテゴリーを入力してください"
+        
+        //何も入力されていなくてもReturnキーを押せるようにする。
+        searchCategory.enablesReturnKeyAutomatically = false
+        
     }
+    
     
     // MARK: UITableViewDataSourceプロトコルのメソッド
     // データの数（＝セルの数）を返すメソッド
@@ -125,4 +137,32 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     
+    //検索ボタンをタップ時
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        //キーボードを閉じる
+        view.endEditing(true)
+        
+        if let search = searchBar.text{
+            taskArray = try! Realm().objects(Task.self).filter("category = '\(search)'")
+        }
+
+        self.tableView.reloadData()
+    }
+    
+    // サーチバーのキャンセルボタンが押された時の処理
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        // キャンセルボタンが押されたら全リスト表示に戻る
+        // サーチバーの中身を空にする
+        searchBar.text = ""
+        //キーボードを閉じる
+        view.endEditing(true)
+        // 表示用配列を元の配列と同じにする
+        taskArray = try! Realm().objects(Task.self).sorted(byKeyPath: "date", ascending: false)
+        // テーブル再表示
+        self.tableView.reloadData()
+    }
+    
+    
+    
 }
+
